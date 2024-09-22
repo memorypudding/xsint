@@ -1,0 +1,5 @@
+requests
+cloudscraper
+holehe
+simple_term_menu
+terminaltables

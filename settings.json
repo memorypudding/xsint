@@ -1,0 +1,11 @@
+{
+    "menu": {
+        "highlight": "fg_cyan",
+        "cursor": "> ",
+        "cursorstyle": "fg_green"
+    },
+    "tumblr": {
+        "email": "",
+        "password": ""
+    }
+}
