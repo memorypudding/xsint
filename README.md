@@ -1,6 +1,6 @@
 # xsint - osint simplified
 
-This is a tool I wrote a few years ago and I'm deciding to publish it.
+This is a OSINT tool I wrote a few years ago and I'm deciding to publish it.
 I will most likely not update this all the time but here it is.
 I'm open to contributions. 
 
