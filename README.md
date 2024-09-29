@@ -18,3 +18,4 @@ add a paste lookup
 add emailrep
 add wigle.net
 ```
+![screenshot]([](https://raw.githubusercontent.com/memorypudding/xsint/refs/heads/main/screenshot.png))
