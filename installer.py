@@ -267,7 +267,25 @@ def parse_args() -> argparse.Namespace:
         default=os.environ.get("XSINT_BIN_DIR"),
         help="Install location for wrapper commands.",
     )
+    parser.add_argument(
+        "--skip-extras",
+        action="store_true",
+        default=os.environ.get("XSINT_SKIP_EXTRAS") == "1",
+        help="Skip ghunt and gitfive (heavy deps; auto-set on iSH/Alpine).",
+    )
     return parser.parse_args()
+
+
+def _is_ish_or_alpine() -> bool:
+    if Path("/proc/ish").exists():
+        return True
+    try:
+        with open("/proc/version", "r", encoding="utf-8", errors="ignore") as f:
+            if "ish" in f.read().lower():
+                return True
+    except OSError:
+        pass
+    return Path("/etc/alpine-release").exists()
 
 
 def main() -> None:
@@ -285,6 +303,11 @@ def main() -> None:
     install_dir.mkdir(parents=True, exist_ok=True)
     bin_dir.mkdir(parents=True, exist_ok=True)
 
+    skip_extras = args.skip_extras or (_is_ish_or_alpine() and not os.environ.get("XSINT_WITH_EXTRAS"))
+    if skip_extras:
+        section("ghunt / gitfive will be skipped on this platform.")
+        info("")
+
     ensure_pip(python)
     pip_install(python, ["--upgrade", "pip", "--quiet"])
 
@@ -298,37 +321,40 @@ def main() -> None:
     pip_install(python, ["-e", str(install_dir), "--quiet"])
     info("")
 
-    # Install ghunt and gitfive in *separate* pip invocations. Combined,
-    # pip's resolver sometimes can't satisfy both (each pins different
-    # transitive versions). Splitting lets each get its own resolution;
-    # on a hard conflict we fall back to --no-deps for that tool.
-    section(f"{verb} gitfive...")
-    pip_install_with_fallback(
-        python, ["--upgrade", "gitfive"], fallback_no_deps=True,
-    )
-    info("")
+    if not skip_extras:
+        # Install ghunt and gitfive in *separate* pip invocations. Combined,
+        # pip's resolver sometimes can't satisfy both (each pins different
+        # transitive versions). Splitting lets each get its own resolution;
+        # on a hard conflict we fall back to --no-deps for that tool.
+        section(f"{verb} gitfive...")
+        pip_install_with_fallback(
+            python, ["--upgrade", "gitfive"], fallback_no_deps=True,
+        )
+        info("")
 
-    section(f"{verb} ghunt...")
-    pip_install_with_fallback(
-        python, ["--upgrade", "git+https://github.com/mxrch/ghunt"],
-        fallback_no_deps=True,
-    )
-    info("")
+        section(f"{verb} ghunt...")
+        pip_install_with_fallback(
+            python, ["--upgrade", "git+https://github.com/mxrch/ghunt"],
+            fallback_no_deps=True,
+        )
+        info("")
 
     if os.name == "nt":
         write_windows_wrapper(bin_dir / "xsint.cmd", python, "xsint")
-        write_windows_wrapper(bin_dir / "ghunt.cmd", python, "ghunt")
-        write_windows_wrapper(bin_dir / "gitfive.cmd", python, "gitfive")
         success(f"Installed xsint wrapper to: {bin_dir / 'xsint.cmd'}")
-        success(f"Installed ghunt wrapper to: {bin_dir / 'ghunt.cmd'}")
-        success(f"Installed gitfive wrapper to: {bin_dir / 'gitfive.cmd'}")
+        if not skip_extras:
+            write_windows_wrapper(bin_dir / "ghunt.cmd", python, "ghunt")
+            write_windows_wrapper(bin_dir / "gitfive.cmd", python, "gitfive")
+            success(f"Installed ghunt wrapper to: {bin_dir / 'ghunt.cmd'}")
+            success(f"Installed gitfive wrapper to: {bin_dir / 'gitfive.cmd'}")
     else:
         write_unix_wrapper(bin_dir / "xsint", python, "xsint")
-        write_unix_wrapper(bin_dir / "ghunt", python, "ghunt")
-        write_unix_wrapper(bin_dir / "gitfive", python, "gitfive")
         success(f"Installed xsint wrapper to: {bin_dir / 'xsint'}")
-        success(f"Installed ghunt wrapper to: {bin_dir / 'ghunt'}")
-        success(f"Installed gitfive wrapper to: {bin_dir / 'gitfive'}")
+        if not skip_extras:
+            write_unix_wrapper(bin_dir / "ghunt", python, "ghunt")
+            write_unix_wrapper(bin_dir / "gitfive", python, "gitfive")
+            success(f"Installed ghunt wrapper to: {bin_dir / 'ghunt'}")
+            success(f"Installed gitfive wrapper to: {bin_dir / 'gitfive'}")
     info("")
 
     if not path_has_dir(bin_dir):

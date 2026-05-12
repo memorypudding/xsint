@@ -18,10 +18,30 @@ It's the kind of tool a journalist might use to vet a tip, a security team might
 On Mac or Linux:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/h1lw/xsint/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/h1lw/xsint/main/install.sh | sh
 ```
 
 You need Python 3.10 or newer. The installer handles everything else.
+
+### On an iPhone (iSH)
+
+[iSH](https://ish.app) gives you an Alpine Linux shell on iOS. xsint runs there, with the same one-liner:
+
+```sh
+apk add curl
+curl -fsSL https://raw.githubusercontent.com/h1lw/xsint/main/install.sh | sh
+```
+
+The installer detects iSH automatically and:
+
+- Installs Python and build deps via `apk`
+- Skips `ghunt` and `gitfive` (their Rust/native dep chains don't build well under iSH's emulated x86). Everything else — email enumeration, HIBP, phone/IP lookups, IntelX, 9Ghz, etc. — works.
+
+To force-install the extras anyway (slow, may fail):
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/h1lw/xsint/main/install.sh | sh -s -- --with-extras
+```
 
 ## Use
 
